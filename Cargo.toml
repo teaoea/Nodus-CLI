@@ -1,0 +1,39 @@
+[package]
+name = "nodus-cli"
+version = "0.1.0-dev"
+authors = ["可莉唯一的狗"]
+edition = "2024"
+rust-version = "1.89"
+license = "MIT"
+homepage = "https://github.com/teaoea/Nodus-CLI"
+readme = "README.md"
+publish = false
+keywords = ["nodus", "proxy", "linux", "cli", "daemon"]
+categories = ["command-line-utilities", "network-programming"]
+
+[lib]
+name = "nodus_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "nodus"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[dependencies]
+# 锁定本地 Nodus Core 内核；所有协议、路由、DNS、Mesh、预算与事务语义完全委派给 Core。
+nodus_core = { package = "Nodus-Core", version = "=1.0.0-dev", path = "../Nodus Core" }
+# 复用 Core 已锁定并登记许可的基础序列化、安全擦除与 Unix 平台安全接口。
+serde = { version = "=1.0.228", features = ["derive"] }
+serde_json = { version = "=1.0.149" }
+zeroize = { version = "=1.9.0", features = ["derive"] }
+
+[target.'cfg(unix)'.dependencies]
+nix = { version = "=0.31.3", default-features = false, features = ["fs", "user"] }

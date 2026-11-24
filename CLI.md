@@ -6,7 +6,7 @@
 
 | 命令 | 已实现行为 |
 | --- | --- |
-| `nodus help`、`nodus -h`、`nodus --help` | 显示当前可用命令和全局选项。`nodus version --help` 查看版本帮助，`nodus config --help` 查看配置帮助。`--json` 返回帮助主题和正文。 |
+| `nodus help`、`nodus -h`、`nodus --help` | 显示当前可用命令和全局选项。`nodus --help version`、`nodus help version` 或 `nodus version --help` 查看版本帮助。`nodus --help config`、`nodus help config` 或 `nodus config --help` 查看配置帮助。`--json` 返回帮助主题和正文。 |
 | `nodus version`、`nodus -V`、`nodus --version` | 返回 CLI 和 Core 版本、Core ABI、构建来源、目标信息及当前阶段能力。TUN、透明网关、Mesh 和服务端均标为不可用。`nodus version` 不接受额外位置参数。 |
 | `nodus config check <FILE>` | 离线校验指定类型的配置，校验和输出均成功时退出 `0`。 |
 | `nodus config summary <FILE>` | 使用同一离线校验流程，成功后输出与配置类型对应的只读摘要。 |
@@ -25,13 +25,15 @@ nodus [全局选项] <子命令> [子命令选项] [参数]
 | --- | --- | --- |
 | `--config <FILE>` | 可在命令前指定。离线 `config check/summary` 也可用位置参数，`run` 也接受命令名后的 `--config`。全局路径与位置参数或 `run` 内的路径冲突时退出 `2`。 | 调用方提供 |
 | `--memory-budget <SIZE>` | `run` 必填，离线 `config check/summary` 可选。有效值交给 Core 根预算池。支持字节整数及 `B`、`K/KB/KiB`、`M/MB/MiB`、`G/GB/GiB`，带 K、M、G 的单位按 1024 进位。非法值退出 `2`。 | 调用方提供 |
-| `--connection-limit <N>` | 与显式内存预算配合，核对正整数及连接槽位所需内存。L0 尚未对运行中的连接执行数量限制。 | 调用方提供 |
+| `--connection-limit <N>` | 须同时显式提供内存预算。CLI 检查连接数为平台整数范围内的正整数。活动连接限额属于 L1，由 Core 在运行时执行。 | 调用方提供 |
 | `--socket <PATH>` | 接受并校验显式路径。L0 尚未连接控制 Socket。 | 路径解析规则为 root 使用 `/run/nodus/nodus.sock`，非 root 使用 `$XDG_RUNTIME_DIR/nodus/nodus.sock`。非 root 未设置该变量或留空时需显式传路径。 |
 | `--timeout <DURATION>` | 在命令前接受并校验正整数时长，支持 `ms`、`s`、`m`，无后缀按秒处理。L0 尚未执行 IPC 请求超时。 | `10s` |
-| `--json` | 输出机器可读结果。与顶层 `-h`／`--help` 或 `-V`／`--version` 连用时，放在快捷选项之前。 | 关闭 |
+| `--json` | 输出机器可读结果。可在参数终止符 `--` 之前的全局或子命令位置传入（含与顶层 `-h`／`--help` 或 `-V`／`--version` 任意顺序连用）。 | 关闭 |
 | `-q, --quiet` | 简化支持精简输出的命令。与 `--verbose` 互斥。 | 关闭 |
 | `-v, --verbose` | 已接受参数并检查冲突。L0 渲染路径尚未使用该选项输出附加信息。 | 关闭 |
-| `-h, --help`／`-V, --version` | 显示帮助或版本。 | 无 |
+| `-h, --help`／`-V, --version` | `-V`／`--version` 只作为顶层快捷项。顶层也支持帮助快捷项。`version --help`、`config --help`、`config check --help` 和 `config summary --help` 支持子命令帮助。 | 无 |
+
+`run`（含 `daemon`）和离线 `config check/summary` 的两个预算选项可放在命令前，或放在 `run/daemon`、`config check/summary` 后。同一字段重复时，以命令行从左到右最后一次赋值为准。CLI 合并后校验，将内存预算交给 Core 根预算池，并保留已校验的连接数输入。
 
 ### 1.2 执行模式与阶段标记
 
@@ -65,7 +67,7 @@ nodus [全局选项] <子命令> [子命令选项] [参数]
 
 ### 1.5 JSON 输出契约
 
-机器模式下，CLI 将单次结果写为 stdout 上的一行 UTF-8 JSON，CLI 的结果和错误渲染保持 stderr 为空。预扫描在参数终止符 `--` 前识别独立的 `--json` 选项，以便参数解析失败时也返回 JSON。
+机器模式下，CLI 将单次结果写为 stdout 上的一行 UTF-8 JSON，CLI 的结果和错误渲染保持 stderr 为空。参数终止符 `--` 之前，独立的 `--json` 使用机器模式，包括参数解析失败的调用。当前命令接受的带值选项把紧随其后的参数作为值，即使它形如 `--json`。单独的 `--` 始终结束选项识别，带值选项紧接 `--` 时会报缺少值。终止符之后的参数按位置参数处理。帮助入口只接受对应帮助主题，额外位置参数返回退出码 `2`。例如 `nodus --json --help version -- extra` 将 JSON 用法错误写到 stdout。
 
 离线命令成功示例：
 
@@ -130,7 +132,7 @@ nodus run --config <FILE> --memory-budget <SIZE> [选项]
 
 - `--config <FILE>`：主 YAML 配置文件绝对或相对路径（必填）。
 - `--memory-budget <SIZE>` 为显式交付给 Core 的根内存预算，必填。如 `64MiB`、`256MiB`。
-- `--connection-limit <N>` 为可选连接上限。L0 校验数量及槽位预算。
+- `--connection-limit <N>` 为可选连接上限。L0 校验连接数输入，Core 在运行时负责连接准入与内存计量。
 - `--log-dir <DIR>`：日志与诊断输出目录（遵循私有目录权限检查）。
 - `--state-dir <DIR>`：宿主运行态目录（智能缓存快照等）。
 - L0 接受 `--enable-tun` 标记。Linux TUN 接管为 L2 规划，需要相应权限。
@@ -164,7 +166,7 @@ nodus stop [--timeout <DURATION>]
 | `nodus config reload` | `[IPC][L1]` | 重读当前活动配置路径并原子发布 |
 | `nodus config current` | `[IPC][L1]` | 查看当前生效配置路径、修订代次、生效时间与摘要 |
 
-离线命令可用 `nodus --config <FILE> config check` 或 `nodus --config <FILE> config summary` 代替位置参数。两种方式同时提供时须指向同一规范化路径。两条命令均可附加 `--memory-budget <SIZE>`。
+离线命令可用 `nodus --config <FILE> config check` 或 `nodus --config <FILE> config summary` 代替位置参数。两种方式同时提供时须指向同一规范化路径。两条命令均接受 `--memory-budget <SIZE>` 和可选的 `--connection-limit <N>`，位置和重复规则见第 1.1 节。
 
 | `--kind` | L0 输入与机器摘要 |
 | --- | --- |

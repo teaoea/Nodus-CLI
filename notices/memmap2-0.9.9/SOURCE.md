@@ -1,0 +1,1 @@
+memmap2 0.9.9，来源 https://crates.io/crates/memmap2/0.9.9 ，仓库 https://github.com/RazrFalcon/memmap2-rs 。SPDX MIT OR Apache-2.0，本项目选择MIT并保留双许可证原文。仅使用匿名映射与只读冻结安全API，不使用文件映射或可执行映射。MSRV 1.63，低于本仓库1.89；新增传递依赖仅复用已有libc。

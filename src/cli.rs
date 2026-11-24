@@ -1231,7 +1231,7 @@ fn render_config_summary_human(report: &ConfigCheckReport, quiet: bool) -> Strin
 pub fn render_help(topic: HelpTopic) -> &'static str {
     match topic {
         HelpTopic::Root => {
-            "Nodus-CLI (nodus) — Nodus Core 无头 Linux 宿主\n\
+            "Nodus CLI (nodus) — Linux 节点部署与运维\n\
              \n\
              用法:\n\
                nodus [全局选项] <子命令> [子命令选项] [参数]\n\

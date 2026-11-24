@@ -1,6 +1,6 @@
 # Nodus CLI
 
-`Nodus-CLI`（单二进制 `nodus`）是 `Nodus-Core` 的无头 Linux 宿主，面向 VPS、软路由、NAS、树莓派及服务器环境提供命令行与守护进程入口。
+`nodus` 是面向 Linux 主机的节点部署与运维工具，主要用于代理节点、Nodus 节点和 Tailscale 节点的部署。项目职责见[《代码编写规范》第二章](agents/代码编写规范.md#二项目职责与-core-边界must)，当前接入的命令见 [CLI.md](CLI.md)。
 
 ## 阶段实施状态
 
